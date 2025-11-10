@@ -35,4 +35,7 @@ export const createTeamMember = (data) => api.post('/team', data);
 export const updateTeamMember = (id, data) => api.put(`/team/${id}`, data);
 export const deleteTeamMember = (id) => api.delete(`/team/${id}`);
 
+// Health Check
+export const checkHealth = () => api.get('/health');
+
 export default api;

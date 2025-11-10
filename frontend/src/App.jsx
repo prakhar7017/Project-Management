@@ -4,6 +4,7 @@ import ProjectDashboard from './components/ProjectDashboardNew';
 import TaskList from './components/TaskListNew';
 import TeamOverview from './components/TeamOverviewNew';
 import AIChat from './components/AIChat';
+import HealthCheck from './components/HealthCheck';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           </Routes>
         </div>
         <AIChat />
+        <HealthCheck />
       </div>
     </Router>
   );
