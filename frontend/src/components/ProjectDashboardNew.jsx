@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, FolderOpen, Sparkles, TrendingUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, FolderOpen, Sparkles, TrendingUp, Search, Filter, ArrowUpDown, X } from 'lucide-react';
 import { getProjects, createProject, updateProject, deleteProject } from '../services/api';
+import { useToastContext } from '../contexts/ToastContext';
 
 const ProjectDashboard = () => {
   const [projects, setProjects] = useState([]);
@@ -9,7 +10,12 @@ const ProjectDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [formData, setFormData] = useState({ name: '', description: '', progress: 0 });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('date'); // 'date', 'name', 'progress', 'status'
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
   const navigate = useNavigate();
+  const toast = useToastContext();
 
   useEffect(() => {
     fetchProjects();
@@ -22,6 +28,7 @@ const ProjectDashboard = () => {
       setLoading(false);
     } catch (error) {
       console.error('Error fetching projects:', error);
+      toast.error('Failed to load projects. Please try again.');
       setLoading(false);
     }
   };
@@ -31,13 +38,16 @@ const ProjectDashboard = () => {
     try {
       if (editingProject) {
         await updateProject(editingProject._id, formData);
+        toast.success('Project updated successfully!');
       } else {
         await createProject(formData);
+        toast.success('Project created successfully!');
       }
       fetchProjects();
       closeModal();
     } catch (error) {
       console.error('Error saving project:', error);
+      toast.error(error.response?.data?.error || 'Failed to save project. Please try again.');
     }
   };
 
@@ -45,9 +55,11 @@ const ProjectDashboard = () => {
     if (window.confirm('Are you sure you want to delete this project?')) {
       try {
         await deleteProject(id);
+        toast.success('Project deleted successfully!');
         fetchProjects();
       } catch (error) {
         console.error('Error deleting project:', error);
+        toast.error('Failed to delete project. Please try again.');
       }
     }
   };
@@ -84,6 +96,65 @@ const ProjectDashboard = () => {
     return 'from-slate-500 to-slate-400';
   };
 
+  // Filter and sort projects
+  const filteredAndSortedProjects = useMemo(() => {
+    let filtered = projects;
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(project =>
+        project.name.toLowerCase().includes(query) ||
+        (project.description && project.description.toLowerCase().includes(query))
+      );
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(project => project.status === statusFilter);
+    }
+
+    // Sort
+    const sorted = [...filtered].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'progress':
+          comparison = a.progress - b.progress;
+          break;
+        case 'status':
+          const statusOrder = { 'Not Started': 0, 'In Progress': 1, 'Completed': 2 };
+          comparison = (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0);
+          break;
+        case 'date':
+        default:
+          // Compare dates: a - b means older dates come first (asc), newer dates come first (desc)
+          const dateA = new Date(a.createdAt || a.updatedAt || 0).getTime();
+          const dateB = new Date(b.createdAt || b.updatedAt || 0).getTime();
+          comparison = dateA - dateB; // Positive if a is newer, negative if a is older
+          break;
+      }
+      
+      // For 'asc' (oldest first): return comparison as-is (older dates first)
+      // For 'desc' (newest first): reverse comparison (newer dates first)
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return sorted;
+  }, [projects, searchQuery, statusFilter, sortBy, sortOrder]);
+
+  const handleSortChange = (newSortBy) => {
+    if (sortBy === newSortBy) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('desc');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -98,18 +169,80 @@ const ProjectDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto relative z-10">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Projects</h1>
-          <p className="text-slate-400">Manage your projects with AI-powered insights</p>
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">Projects</h1>
+            <p className="text-slate-400">Manage your projects with AI-powered insights</p>
+          </div>
+          <button
+            onClick={() => openModal()}
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl hover:scale-105 transition-smooth neon-blue font-medium"
+          >
+            <Plus size={20} />
+            New Project
+          </button>
         </div>
-        <button
-          onClick={() => openModal()}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl hover:scale-105 transition-smooth neon-blue font-medium"
-        >
-          <Plus size={20} />
-          New Project
-        </button>
+
+        {/* Search and Filters */}
+        <div className="glass-card rounded-2xl p-4 flex flex-wrap gap-4 items-center">
+          {/* Search */}
+          <div className="flex-1 min-w-[200px] relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search projects..."
+              className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex items-center gap-2">
+            <Filter size={18} className="text-slate-400" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
+            >
+              <option value="all">All Status</option>
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+
+          {/* Sort */}
+          <div className="flex items-center gap-2">
+            <ArrowUpDown size={18} className="text-slate-400" />
+            <select
+              value={`${sortBy}-${sortOrder}`}
+              onChange={(e) => {
+                const [by, order] = e.target.value.split('-');
+                setSortBy(by);
+                setSortOrder(order);
+              }}
+              className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
+            >
+              <option value="date-desc">Newest First</option>
+              <option value="date-asc">Oldest First</option>
+              <option value="name-asc">Name (A-Z)</option>
+              <option value="name-desc">Name (Z-A)</option>
+              <option value="progress-desc">Progress (High)</option>
+              <option value="progress-asc">Progress (Low)</option>
+              <option value="status-asc">Status</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -141,9 +274,16 @@ const ProjectDashboard = () => {
         </div>
       </div>
 
+      {/* Results count */}
+      {filteredAndSortedProjects.length !== projects.length && (
+        <div className="mb-4 text-sm text-slate-400">
+          Showing {filteredAndSortedProjects.length} of {projects.length} projects
+        </div>
+      )}
+
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {projects.map((project) => (
+        {filteredAndSortedProjects.map((project) => (
           <div
             key={project._id}
             className="glass-card rounded-2xl p-6 hover-lift cursor-pointer group relative overflow-hidden"
@@ -225,6 +365,24 @@ const ProjectDashboard = () => {
           >
             <Plus size={20} />
             Create Project
+          </button>
+        </div>
+      )}
+
+      {projects.length > 0 && filteredAndSortedProjects.length === 0 && (
+        <div className="glass-card rounded-2xl p-12 text-center">
+          <Search className="mx-auto text-slate-600 mb-4" size={64} />
+          <h3 className="text-2xl font-bold text-white mb-2">No projects found</h3>
+          <p className="text-slate-400 mb-6">Try adjusting your search or filters</p>
+          <button
+            onClick={() => {
+              setSearchQuery('');
+              setStatusFilter('all');
+            }}
+            className="inline-flex items-center gap-2 bg-slate-700/50 text-slate-300 px-6 py-3 rounded-xl hover:bg-slate-700 transition-smooth font-medium"
+          >
+            <X size={20} />
+            Clear Filters
           </button>
         </div>
       )}

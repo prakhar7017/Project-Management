@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Check, Trash2, Sparkles, Lightbulb, Users, Loader } from 'lucide-react';
-import { getProject, createTask, updateTask, deleteTask, generateTasks, getProjectInsights, getTeamMembers } from '../services/api';
+import { ArrowLeft, Plus, Check, Trash2, Sparkles, Lightbulb, Users, Loader, Calendar, Clock, Zap, RefreshCw } from 'lucide-react';
+import { getProject, createTask, updateTask, deleteTask, generateTasks, getProjectInsights, getTeamMembers, autoAssignTask, autoUpdatePriorities } from '../services/api';
+import { useToastContext } from '../contexts/ToastContext';
 
 const TaskList = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const toast = useToastContext();
   const [project, setProject] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,6 +21,16 @@ const TaskList = () => {
   const [newTaskName, setNewTaskName] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
   const [selectedMember, setSelectedMember] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [taskPriority, setTaskPriority] = useState('medium'); // Priority for new task
+  const [editingTaskDueDate, setEditingTaskDueDate] = useState(null);
+  const [showDueDateModal, setShowDueDateModal] = useState(false);
+  const [taskDueDate, setTaskDueDate] = useState('');
+  const [editingTaskPriority, setEditingTaskPriority] = useState(null);
+  const [showPriorityModal, setShowPriorityModal] = useState(false);
+  const [taskPriorityValue, setTaskPriorityValue] = useState('medium');
+  const [autoAssigning, setAutoAssigning] = useState(null); // taskId being auto-assigned
+  const [updatingPriorities, setUpdatingPriorities] = useState(false);
 
   useEffect(() => {
     fetchProject();
@@ -32,6 +44,7 @@ const TaskList = () => {
       setLoading(false);
     } catch (error) {
       console.error('Error fetching project:', error);
+      toast.error('Failed to load project. Please try again.');
       setLoading(false);
     }
   };
@@ -48,22 +61,33 @@ const TaskList = () => {
   const handleToggleTask = async (task) => {
     try {
       await updateTask(id, task.id, { completed: !task.completed });
+      toast.success(task.completed ? 'Task marked as incomplete' : 'Task completed!');
       fetchProject();
     } catch (error) {
       console.error('Error updating task:', error);
+      toast.error('Failed to update task. Please try again.');
     }
   };
 
   const handleAddTask = async (e) => {
     e.preventDefault();
     try {
-      await createTask(id, { name: newTaskName, assignedTo: assignedTo || undefined });
+      await createTask(id, { 
+        name: newTaskName, 
+        assignedTo: assignedTo || undefined,
+        dueDate: dueDate || undefined,
+        priority: taskPriority || undefined
+      });
+      toast.success('Task created successfully!');
       setNewTaskName('');
       setAssignedTo('');
+      setDueDate('');
+      setTaskPriority('medium');
       setShowModal(false);
       fetchProject();
     } catch (error) {
       console.error('Error creating task:', error);
+      toast.error('Failed to create task. Please try again.');
     }
   };
 
@@ -71,27 +95,29 @@ const TaskList = () => {
     if (window.confirm('Are you sure you want to delete this task?')) {
       try {
         await deleteTask(id, taskId);
+        toast.success('Task deleted successfully!');
         fetchProject();
       } catch (error) {
         console.error('Error deleting task:', error);
+        toast.error('Failed to delete task. Please try again.');
       }
     }
   };
 
   const handleGenerateTasks = async () => {
     if (!project.description) {
-      alert('Please add a project description first to generate tasks with AI!');
+      toast.warning('Please add a project description first to generate tasks with AI!');
       return;
     }
     
     setGeneratingTasks(true);
     try {
       await generateTasks(id);
+      toast.success('✨ AI generated tasks successfully!');
       fetchProject();
-      alert('✨ AI generated tasks successfully!');
     } catch (error) {
       console.error('Error generating tasks:', error);
-      alert('Failed to generate tasks. Make sure your OpenAI API key is configured.');
+      toast.error('Failed to generate tasks. Make sure your OpenAI API key is configured.');
     } finally {
       setGeneratingTasks(false);
     }
@@ -103,9 +129,10 @@ const TaskList = () => {
       const response = await getProjectInsights(id);
       setInsights(response.data);
       setShowInsights(true);
+      toast.success('AI insights generated!');
     } catch (error) {
       console.error('Error getting insights:', error);
-      alert('Failed to get insights. Make sure your OpenAI API key is configured.');
+      toast.error('Failed to get insights. Make sure your OpenAI API key is configured.');
     } finally {
       setLoadingInsights(false);
     }
@@ -124,14 +151,123 @@ const TaskList = () => {
     try {
       const assignedTo = selectedMember === '' ? null : selectedMember;
       await updateTask(id, taskToAssign.id, { assignedTo });
+      toast.success(assignedTo ? `Task assigned to ${assignedTo}` : 'Task unassigned');
       await fetchProject();
+      await fetchTeamMembers(); // Refresh team members to sync workload
       
       setShowAssignModal(false);
       setTaskToAssign(null);
       setSelectedMember('');
     } catch (error) {
       console.error('Error assigning task:', error);
-      alert('Failed to assign task');
+      toast.error('Failed to assign task. Please try again.');
+    }
+  };
+
+  const getDueDateStatus = (dueDate) => {
+    if (!dueDate) return null;
+    const due = new Date(dueDate);
+    const now = new Date();
+    const diffTime = due - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'overdue';
+    if (diffDays === 0) return 'today';
+    if (diffDays <= 3) return 'soon';
+    return 'upcoming';
+  };
+
+  const formatDueDate = (dueDate) => {
+    if (!dueDate) return null;
+    const date = new Date(dueDate);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const openDueDateModal = (task) => {
+    setEditingTaskDueDate(task);
+    setTaskDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
+    setShowDueDateModal(true);
+  };
+
+  const openPriorityModal = (task) => {
+    setEditingTaskPriority(task);
+    setTaskPriorityValue(task.priority || 'medium');
+    setShowPriorityModal(true);
+  };
+
+  const handleUpdatePriority = async (e) => {
+    e.preventDefault();
+    if (!editingTaskPriority) return;
+
+    try {
+      await updateTask(id, editingTaskPriority.id, { priority: taskPriorityValue || undefined });
+      toast.success('Priority updated successfully!');
+      setShowPriorityModal(false);
+      setEditingTaskPriority(null);
+      setTaskPriorityValue('medium');
+      fetchProject();
+    } catch (error) {
+      console.error('Error updating priority:', error);
+      toast.error('Failed to update priority. Please try again.');
+    }
+  };
+
+  const handleUpdateDueDate = async (e) => {
+    e.preventDefault();
+    if (!editingTaskDueDate) return;
+
+    try {
+      await updateTask(id, editingTaskDueDate.id, { dueDate: taskDueDate || undefined });
+      toast.success('Due date updated successfully!');
+      setShowDueDateModal(false);
+      setEditingTaskDueDate(null);
+      setTaskDueDate('');
+      fetchProject();
+    } catch (error) {
+      console.error('Error updating due date:', error);
+      toast.error('Failed to update due date. Please try again.');
+    }
+  };
+
+  const handleAutoAssign = async (task) => {
+    if (task.completed) {
+      toast.warning('Cannot auto-assign completed tasks');
+      return;
+    }
+
+    setAutoAssigning(task.id);
+    try {
+      const response = await autoAssignTask(id, task.id);
+      if (response.data.success) {
+        toast.success(`✨ Task auto-assigned to ${response.data.assignedTo}!`);
+        await fetchProject();
+        await fetchTeamMembers(); // Refresh team data
+      } else {
+        toast.error(response.data.message || 'Failed to auto-assign task');
+      }
+    } catch (error) {
+      console.error('Error auto-assigning task:', error);
+      toast.error('Failed to auto-assign task. Please try again.');
+    } finally {
+      setAutoAssigning(null);
+    }
+  };
+
+  const handleAutoUpdatePriorities = async () => {
+    setUpdatingPriorities(true);
+    try {
+      const response = await autoUpdatePriorities(id);
+      if (response.data.success) {
+        toast.success(`✨ Updated priority for ${response.data.updatedCount} task(s) based on due dates!`);
+        await fetchProject();
+      } else {
+        toast.error('Failed to update priorities');
+      }
+    } catch (error) {
+      console.error('Error updating priorities:', error);
+      toast.error('Failed to update priorities. Please try again.');
+    } finally {
+      setUpdatingPriorities(false);
     }
   };
 
@@ -184,7 +320,7 @@ const TaskList = () => {
           </div>
           
           {/* AI Buttons */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <button
               onClick={handleGenerateTasks}
               disabled={generatingTasks}
@@ -217,6 +353,25 @@ const TaskList = () => {
                 <>
                   <Lightbulb size={18} />
                   AI Insights
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleAutoUpdatePriorities}
+              disabled={updatingPriorities}
+              className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-5 py-2.5 rounded-xl hover:scale-105 transition-smooth font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Auto-update task priorities based on due dates"
+            >
+              {updatingPriorities ? (
+                <>
+                  <Loader size={18} className="animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <RefreshCw size={18} />
+                  Update Priorities
                 </>
               )}
             </button>
@@ -367,14 +522,16 @@ const TaskList = () => {
                           AI
                         </span>
                       )}
-                      {task.priority && (
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${getPriorityColor(task.priority)}`}>
-                          {task.priority}
-                        </span>
-                      )}
+                      <button
+                        onClick={() => openPriorityModal(task)}
+                        className={`px-2 py-0.5 rounded-full text-xs font-semibold border hover:opacity-80 transition-smooth ${getPriorityColor(task.priority || 'medium')}`}
+                        title="Click to edit priority"
+                      >
+                        {task.priority || 'medium'}
+                      </button>
                     </div>
                     
-                    <div className="flex items-center gap-4 text-sm text-slate-400">
+                    <div className="flex items-center gap-4 text-sm text-slate-400 flex-wrap">
                       {task.assignedTo ? (
                         <div className="flex items-center gap-1">
                           <Users size={14} />
@@ -384,13 +541,62 @@ const TaskList = () => {
                         <span className="text-slate-500 italic">Unassigned</span>
                       )}
                       {task.estimatedHours && (
-                        <span>⏱️ {task.estimatedHours}h</span>
+                        <div className="flex items-center gap-1">
+                          <Clock size={14} />
+                          <span>{task.estimatedHours}h</span>
+                        </div>
+                      )}
+                      {task.dueDate ? (
+                        <button
+                          onClick={() => openDueDateModal(task)}
+                          className={`flex items-center gap-1 hover:opacity-80 transition-smooth ${
+                            getDueDateStatus(task.dueDate) === 'overdue' ? 'text-red-400' :
+                            getDueDateStatus(task.dueDate) === 'today' ? 'text-yellow-400' :
+                            getDueDateStatus(task.dueDate) === 'soon' ? 'text-orange-400' :
+                            'text-blue-400'
+                          }`}
+                          title="Click to edit due date"
+                        >
+                          <Calendar size={14} />
+                          <span className="font-medium">
+                            {formatDueDate(task.dueDate)}
+                            {getDueDateStatus(task.dueDate) === 'overdue' && ' (Overdue)'}
+                            {getDueDateStatus(task.dueDate) === 'today' && ' (Today)'}
+                            {getDueDateStatus(task.dueDate) === 'soon' && ' (Soon)'}
+                          </span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => openDueDateModal(task)}
+                          className="flex items-center gap-1 text-slate-500 hover:text-blue-400 transition-smooth text-sm"
+                          title="Add due date"
+                        >
+                          <Calendar size={14} />
+                          <span>Add due date</span>
+                        </button>
                       )}
                     </div>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-2">
+                  {!task.assignedTo && !task.completed && (
+                    <button
+                      onClick={() => handleAutoAssign(task)}
+                      disabled={autoAssigning === task.id}
+                      className="flex items-center gap-1 px-3 py-2 text-purple-400 hover:text-purple-300 hover:bg-slate-700/50 rounded-lg transition-smooth text-sm font-medium disabled:opacity-50"
+                      title="Auto-assign to best team member"
+                    >
+                      {autoAssigning === task.id ? (
+                        <Loader size={16} className="animate-spin" />
+                      ) : (
+                        <>
+                          <Zap size={16} />
+                          Auto-Assign
+                        </>
+                      )}
+                    </button>
+                  )}
                   <button
                     onClick={() => openAssignModal(task)}
                     className="flex items-center gap-1 px-3 py-2 text-blue-400 hover:text-blue-300 hover:bg-slate-700/50 rounded-lg transition-smooth text-sm font-medium"
@@ -431,7 +637,7 @@ const TaskList = () => {
                   placeholder="Enter task name"
                 />
               </div>
-              <div className="mb-6">
+              <div className="mb-5">
                 <label className="block text-slate-300 font-medium mb-2">
                   Assign To (Optional)
                 </label>
@@ -453,6 +659,31 @@ const TaskList = () => {
                   </p>
                 )}
               </div>
+              <div className="mb-5">
+                <label className="block text-slate-300 font-medium mb-2">
+                  Priority (Optional)
+                </label>
+                <select
+                  value={taskPriority}
+                  onChange={(e) => setTaskPriority(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div className="mb-6">
+                <label className="block text-slate-300 font-medium mb-2">
+                  Due Date (Optional)
+                </label>
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
+                />
+              </div>
               <div className="flex gap-3 justify-end">
                 <button
                   type="button"
@@ -460,6 +691,8 @@ const TaskList = () => {
                     setShowModal(false);
                     setNewTaskName('');
                     setAssignedTo('');
+                    setDueDate('');
+                    setTaskPriority('medium');
                   }}
                   className="px-6 py-3 text-slate-300 bg-slate-700/50 rounded-xl hover:bg-slate-700 transition-smooth font-medium"
                 >
@@ -500,12 +733,50 @@ const TaskList = () => {
                   autoFocus
                 >
                   <option value="">-- Unassign / Select Member --</option>
-                  {teamMembers.map((member) => (
-                    <option key={member.id} value={member.name}>
-                      {member.name} {member.role ? `(${member.role})` : ''}
-                    </option>
-                  ))}
+                  {teamMembers.map((member) => {
+                    // Use taskCount from team member data (includes all projects)
+                    // If this task is currently assigned to this member, subtract 1
+                    const currentTaskCount = (member.taskCount || 0) - (taskToAssign.assignedTo === member.name ? 1 : 0);
+                    const workloadText = currentTaskCount > 0 ? ` (${currentTaskCount} task${currentTaskCount !== 1 ? 's' : ''})` : '';
+                    return (
+                      <option key={member.id} value={member.name}>
+                        {member.name} {member.role ? `(${member.role})` : ''}{workloadText}
+                      </option>
+                    );
+                  })}
                 </select>
+                {selectedMember && (
+                  <div className="mt-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                    {(() => {
+                      const member = teamMembers.find(m => m.name === selectedMember);
+                      if (!member) return null;
+                      // Use taskCount from team member data (includes all projects)
+                      // If this task is currently assigned to this member, subtract 1
+                      const currentTaskCount = (member.taskCount || 0) - (taskToAssign.assignedTo === member.name ? 1 : 0);
+                      // If reassigning to the same person, count stays the same; otherwise add 1
+                      const newTaskCount = taskToAssign.assignedTo === selectedMember ? currentTaskCount : currentTaskCount + 1;
+                      const workloadLevel = newTaskCount >= 3 ? 'high' : newTaskCount === 2 ? 'medium' : 'no';
+                      return (
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-slate-400">Current tasks:</span>
+                            <span className="text-white font-medium">{currentTaskCount}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-slate-400">After assignment:</span>
+                            <span className={`font-medium ${
+                              workloadLevel === 'high' ? 'text-red-400' :
+                              workloadLevel === 'medium' ? 'text-orange-400' :
+                              'text-emerald-400'
+                            }`}>
+                              {newTaskCount} {workloadLevel === 'high' ? '(High Workload)' : workloadLevel === 'medium' ? '(Medium Workload)' : '(No Workload)'}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
                 {teamMembers.length === 0 && (
                   <p className="text-sm text-slate-400 mt-2">
                     No team members found. <a href="/team" className="text-blue-400 hover:underline">Add team members</a> first.
@@ -529,6 +800,134 @@ const TaskList = () => {
                   className="px-6 py-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-xl hover:scale-105 transition-smooth neon-blue font-medium"
                 >
                   {selectedMember ? 'Assign' : 'Unassign'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Priority Modal */}
+      {showPriorityModal && editingTaskPriority && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass-strong rounded-2xl p-8 max-w-md w-full mx-4 border border-slate-700/50">
+            <h2 className="text-2xl font-bold text-white mb-4">
+              {editingTaskPriority.aiGenerated ? 'Edit Priority - AI Task' : 'Edit Priority'}
+            </h2>
+            <div className="mb-6">
+              <p className="text-slate-400 mb-2">Task:</p>
+              <p className="text-white font-medium">{editingTaskPriority.name}</p>
+              {editingTaskPriority.aiGenerated && (
+                <p className="text-sm text-purple-400 mt-1 flex items-center gap-1">
+                  <Sparkles size={14} />
+                  AI Generated Task
+                </p>
+              )}
+            </div>
+            <form onSubmit={handleUpdatePriority}>
+              <div className="mb-6">
+                <label className="block text-slate-300 font-medium mb-2">
+                  Priority
+                </label>
+                <select
+                  value={taskPriorityValue}
+                  onChange={(e) => setTaskPriorityValue(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
+                  autoFocus
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+                <div className="mt-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                  <p className="text-xs text-slate-400 mb-2">Priority Levels:</p>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded border ${getPriorityColor('high')}`}>High</span>
+                      <span className="text-slate-400">Urgent tasks, tight deadlines</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded border ${getPriorityColor('medium')}`}>Medium</span>
+                      <span className="text-slate-400">Normal priority tasks</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded border ${getPriorityColor('low')}`}>Low</span>
+                      <span className="text-slate-400">Can be done later</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPriorityModal(false);
+                    setEditingTaskPriority(null);
+                    setTaskPriorityValue('medium');
+                  }}
+                  className="px-6 py-3 text-slate-300 bg-slate-700/50 rounded-xl hover:bg-slate-700 transition-smooth font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-xl hover:scale-105 transition-smooth neon-blue font-medium"
+                >
+                  Save Priority
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Due Date Modal */}
+      {showDueDateModal && editingTaskDueDate && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass-strong rounded-2xl p-8 max-w-md w-full mx-4 border border-slate-700/50">
+            <h2 className="text-2xl font-bold text-white mb-4">
+              {editingTaskDueDate.aiGenerated ? 'Set Due Date for AI Task' : 'Set Due Date'}
+            </h2>
+            <div className="mb-6">
+              <p className="text-slate-400 mb-2">Task:</p>
+              <p className="text-white font-medium">{editingTaskDueDate.name}</p>
+              {editingTaskDueDate.aiGenerated && (
+                <p className="text-sm text-purple-400 mt-1 flex items-center gap-1">
+                  <Sparkles size={14} />
+                  AI Generated Task
+                </p>
+              )}
+            </div>
+            <form onSubmit={handleUpdateDueDate}>
+              <div className="mb-6">
+                <label className="block text-slate-300 font-medium mb-2">
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  value={taskDueDate}
+                  onChange={(e) => setTaskDueDate(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDueDateModal(false);
+                    setEditingTaskDueDate(null);
+                    setTaskDueDate('');
+                  }}
+                  className="px-6 py-3 text-slate-300 bg-slate-700/50 rounded-xl hover:bg-slate-700 transition-smooth font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-xl hover:scale-105 transition-smooth neon-blue font-medium"
+                >
+                  Save
                 </button>
               </div>
             </form>

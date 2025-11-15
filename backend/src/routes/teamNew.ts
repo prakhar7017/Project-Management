@@ -25,18 +25,41 @@ router.get('/', async (req: Request, res: Response) => {
     });
     
     const membersWithWorkload = teamMembers.map(member => {
-      let taskCount = 0;
+      let taskCount = 0; // Total assigned tasks (including completed)
       let completedCount = 0;
+      const assignedTasks: Array<{
+        taskId: string;
+        taskName: string;
+        projectId: string;
+        projectName: string;
+        completed: boolean;
+        priority?: string;
+        dueDate?: Date;
+      }> = [];
+      
       projects.forEach(project => {
         const matchingTasks = project.tasks.filter(
           task => task.assignedTo === member.name
         );
-        taskCount += matchingTasks.filter(t => !t.completed).length;
+        taskCount += matchingTasks.length; // Total tasks assigned
         completedCount += matchingTasks.filter(t => t.completed).length;
+        
+        // Add task details
+        matchingTasks.forEach(task => {
+          assignedTasks.push({
+            taskId: task.id,
+            taskName: task.name,
+            projectId: project._id.toString(),
+            projectName: project.name,
+            completed: task.completed,
+            priority: task.priority,
+            dueDate: task.dueDate
+          });
+        });
         
         // Debug logging
         if (matchingTasks.length > 0) {
-          console.log(`✅ Found ${matchingTasks.length} task(s) for "${member.name}" (${taskCount} active, ${completedCount} completed)`);
+          console.log(`✅ Found ${matchingTasks.length} task(s) for "${member.name}" (${taskCount} total, ${completedCount} completed)`);
           matchingTasks.forEach(task => {
             console.log(`   - Task: "${task.name}", AssignedTo: "${task.assignedTo}", Completed: ${task.completed}`);
           });
@@ -44,13 +67,15 @@ router.get('/', async (req: Request, res: Response) => {
       });
       
       return {
-        id: member._id,
+        id: member._id.toString(), // Ensure ID is a string
         name: member.name,
         email: member.email,
         role: member.role,
-        taskCount,
+        taskCount, // Total assigned tasks
+        completedCount,
         capacity: member.capacity,
-        skills: member.skills
+        skills: member.skills,
+        assignedTasks // Array of assigned tasks with project info
       };
     });
     

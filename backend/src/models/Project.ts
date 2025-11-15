@@ -8,6 +8,7 @@ export interface ITask {
   priority?: 'low' | 'medium' | 'high';
   estimatedHours?: number;
   aiGenerated?: boolean;
+  dueDate?: Date;
 }
 
 export interface IProject extends Document {
@@ -28,7 +29,8 @@ const TaskSchema = new Schema({
   assignedTo: { type: String },
   priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
   estimatedHours: { type: Number },
-  aiGenerated: { type: Boolean, default: false }
+  aiGenerated: { type: Boolean, default: false },
+  dueDate: { type: Date }
 });
 
 const ProjectSchema = new Schema({

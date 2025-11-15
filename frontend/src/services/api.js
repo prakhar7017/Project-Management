@@ -22,6 +22,10 @@ export const getProjectInsights = (projectId) => api.get(`/projects/${projectId}
 export const recommendAssignment = (projectId, taskId) => api.post(`/projects/${projectId}/tasks/${taskId}/recommend-assignment`);
 export const chatWithAI = (message, projectId) => api.post('/projects/ai/chat', { message, projectId });
 
+// Automation Features
+export const autoAssignTask = (projectId, taskId) => api.post(`/projects/${projectId}/tasks/${taskId}/auto-assign`);
+export const autoUpdatePriorities = (projectId) => api.post(`/projects/${projectId}/auto-update-priorities`);
+
 // Tasks
 export const getProjectTasks = (projectId) => api.get(`/projects/${projectId}/tasks`);
 export const createTask = (projectId, data) => api.post(`/projects/${projectId}/tasks`, data);

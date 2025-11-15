@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Project from '../models/Project';
 import TeamMember from '../models/TeamMember';
 import * as aiService from '../services/aiService';
+import * as automationService from '../services/automationService';
 
 const router = Router();
 
@@ -168,7 +169,7 @@ const calculateProjectProgress = (project: any): number => {
 // Add task to project
 router.post('/:id/tasks', async (req: Request, res: Response) => {
   try {
-    const { name, assignedTo, priority } = req.body;
+    const { name, assignedTo, priority, dueDate } = req.body;
     const project = await Project.findById(req.params.id);
 
     if (!project) {
@@ -182,14 +183,21 @@ router.post('/:id/tasks', async (req: Request, res: Response) => {
     // AI: Estimate task duration
     const estimatedHours = await aiService.estimateTaskDuration(name, project.description);
 
+    // Auto-calculate priority from due date if not explicitly provided
+    const taskDueDate = dueDate ? new Date(dueDate) : undefined;
+    const autoPriority = taskDueDate 
+      ? automationService.calculatePriorityFromDueDate(taskDueDate, priority)
+      : (priority || 'medium');
+
     const newTask = {
       id: uuidv4(),
       name,
       completed: false,
       assignedTo,
-      priority: priority || 'medium',
+      priority: autoPriority,
       estimatedHours,
-      aiGenerated: false
+      aiGenerated: false,
+      dueDate: taskDueDate
     };
 
     project.tasks.push(newTask);
@@ -243,7 +251,7 @@ router.post('/:projectId/tasks/:taskId/recommend-assignment', async (req: Reques
 // Update task
 router.put('/:projectId/tasks/:taskId', async (req: Request, res: Response) => {
   try {
-    const { name, completed, assignedTo, priority } = req.body;
+    const { name, completed, assignedTo, priority, dueDate } = req.body;
     const project = await Project.findById(req.params.projectId);
 
     if (!project) {
@@ -270,10 +278,23 @@ router.put('/:projectId/tasks/:taskId', async (req: Request, res: Response) => {
     }
     
     if (priority !== undefined) task.priority = priority;
+    if (dueDate !== undefined) {
+      task.dueDate = dueDate ? new Date(dueDate) : undefined;
+      // Auto-update priority based on new due date if priority wasn't explicitly set
+      if (priority === undefined && task.dueDate) {
+        task.priority = automationService.calculatePriorityFromDueDate(task.dueDate, task.priority);
+      }
+    }
+
+    // Auto-update priority based on due date if task has due date and priority wasn't explicitly changed
+    if (priority === undefined && task.dueDate && !task.completed) {
+      automationService.autoUpdateTaskPriority(task);
+    }
 
     console.log(`\n💾 Updating task "${task.name}"`);
     console.log(`   AssignedTo: "${task.assignedTo}" (${task.assignedTo ? 'assigned' : 'unassigned'})`);
     console.log(`   Completed: ${task.completed}`);
+    console.log(`   Priority: ${task.priority} (${task.dueDate ? 'auto-calculated from due date' : 'manual'})`);
 
     calculateProjectProgress(project);
     await project.save();
@@ -327,6 +348,42 @@ router.post('/ai/chat', async (req: Request, res: Response) => {
     res.json({ response });
   } catch (error) {
     res.status(500).json({ error: 'Failed to process chat' });
+  }
+});
+
+// Auto-assign task endpoint
+router.post('/:projectId/tasks/:taskId/auto-assign', async (req: Request, res: Response) => {
+  try {
+    const result = await automationService.autoAssignTask(req.params.projectId, req.params.taskId);
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        assignedTo: result.assignedTo,
+        message: result.message
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.message
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to auto-assign task' });
+  }
+});
+
+// Auto-update priorities for all tasks in a project
+router.post('/:projectId/auto-update-priorities', async (req: Request, res: Response) => {
+  try {
+    const updatedCount = await automationService.autoUpdateProjectTaskPriorities(req.params.projectId);
+    res.json({
+      success: true,
+      updatedCount,
+      message: `Updated priority for ${updatedCount} task(s)`
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update priorities' });
   }
 });
 
