@@ -12,8 +12,8 @@ const ProjectDashboard = () => {
   const [formData, setFormData] = useState({ name: '', description: '', progress: 0 });
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('date'); // 'date', 'name', 'progress', 'status'
-  const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
+  const [sortBy, setSortBy] = useState('date');
+  const [sortOrder, setSortOrder] = useState('desc');
   const navigate = useNavigate();
   const toast = useToastContext();
 
@@ -27,7 +27,6 @@ const ProjectDashboard = () => {
       setProjects(response.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching projects:', error);
       toast.error('Failed to load projects. Please try again.');
       setLoading(false);
     }
@@ -46,7 +45,6 @@ const ProjectDashboard = () => {
       fetchProjects();
       closeModal();
     } catch (error) {
-      console.error('Error saving project:', error);
       toast.error(error.response?.data?.error || 'Failed to save project. Please try again.');
     }
   };
@@ -58,7 +56,6 @@ const ProjectDashboard = () => {
         toast.success('Project deleted successfully!');
         fetchProjects();
       } catch (error) {
-        console.error('Error deleting project:', error);
         toast.error('Failed to delete project. Please try again.');
       }
     }
@@ -96,11 +93,8 @@ const ProjectDashboard = () => {
     return 'from-slate-500 to-slate-400';
   };
 
-  // Filter and sort projects
   const filteredAndSortedProjects = useMemo(() => {
     let filtered = projects;
-
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(project =>
@@ -109,12 +103,10 @@ const ProjectDashboard = () => {
       );
     }
 
-    // Status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(project => project.status === statusFilter);
     }
 
-    // Sort
     const sorted = [...filtered].sort((a, b) => {
       let comparison = 0;
       
@@ -131,15 +123,12 @@ const ProjectDashboard = () => {
           break;
         case 'date':
         default:
-          // Compare dates: a - b means older dates come first (asc), newer dates come first (desc)
           const dateA = new Date(a.createdAt || a.updatedAt || 0).getTime();
           const dateB = new Date(b.createdAt || b.updatedAt || 0).getTime();
-          comparison = dateA - dateB; // Positive if a is newer, negative if a is older
+          comparison = dateA - dateB;
           break;
       }
       
-      // For 'asc' (oldest first): return comparison as-is (older dates first)
-      // For 'desc' (newest first): reverse comparison (newer dates first)
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
@@ -168,7 +157,6 @@ const ProjectDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto relative z-10">
-      {/* Header */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -184,9 +172,7 @@ const ProjectDashboard = () => {
           </button>
         </div>
 
-        {/* Search and Filters */}
         <div className="glass-card rounded-2xl p-4 flex flex-wrap gap-4 items-center">
-          {/* Search */}
           <div className="flex-1 min-w-[200px] relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
             <input
@@ -206,7 +192,6 @@ const ProjectDashboard = () => {
             )}
           </div>
 
-          {/* Status Filter */}
           <div className="flex items-center gap-2">
             <Filter size={18} className="text-slate-400" />
             <select
@@ -221,7 +206,6 @@ const ProjectDashboard = () => {
             </select>
           </div>
 
-          {/* Sort */}
           <div className="flex items-center gap-2">
             <ArrowUpDown size={18} className="text-slate-400" />
             <select
@@ -245,7 +229,6 @@ const ProjectDashboard = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="glass-card rounded-2xl p-6 hover-lift">
           <div className="flex items-center justify-between mb-2">
@@ -274,14 +257,12 @@ const ProjectDashboard = () => {
         </div>
       </div>
 
-      {/* Results count */}
       {filteredAndSortedProjects.length !== projects.length && (
         <div className="mb-4 text-sm text-slate-400">
           Showing {filteredAndSortedProjects.length} of {projects.length} projects
         </div>
       )}
 
-      {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredAndSortedProjects.map((project) => (
           <div
@@ -289,7 +270,6 @@ const ProjectDashboard = () => {
             className="glass-card rounded-2xl p-6 hover-lift cursor-pointer group relative overflow-hidden"
             onClick={() => navigate(`/projects/${project._id}`)}
           >
-            {/* Gradient overlay on hover */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             
             <div className="relative z-10">
@@ -387,7 +367,6 @@ const ProjectDashboard = () => {
         </div>
       )}
 
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="glass-strong rounded-2xl p-8 max-w-md w-full mx-4 border border-slate-700/50">

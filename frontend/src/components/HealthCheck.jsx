@@ -10,11 +10,9 @@ const HealthCheck = () => {
       const response = await checkHealth();
       setStatus('healthy');
       setLastCheck(new Date().toLocaleTimeString());
-      console.log('✅ Health check passed:', response.data);
     } catch (error) {
       setStatus('unhealthy');
       setLastCheck(new Date().toLocaleTimeString());
-      console.error('❌ Health check failed:', error.message);
     }
   };
 

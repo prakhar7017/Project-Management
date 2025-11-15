@@ -1,9 +1,6 @@
 import OpenAI from 'openai';
 
-// Check if API key is available
 if (!process.env.OPENAI_API_KEY) {
-  console.warn('⚠️  OPENAI_API_KEY not found in environment variables. AI features will be disabled.');
-  console.warn('   Add your OpenAI API key to the .env file to enable AI features.');
 }
 
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({
@@ -29,13 +26,11 @@ export interface WorkloadRecommendation {
   reason: string;
 }
 
-// Generate tasks based on project description
 export const generateTasksFromDescription = async (
   projectName: string,
   projectDescription: string
 ): Promise<AITaskSuggestion[]> => {
   if (!openai) {
-    console.log('AI features disabled - returning empty task list');
     return [];
   }
   
@@ -58,18 +53,15 @@ export const generateTasksFromDescription = async (
 
     let content = completion.choices[0]?.message?.content || '[]';
     
-    // Remove markdown code blocks if present
     content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     
     const tasks = JSON.parse(content);
     return tasks;
   } catch (error) {
-    console.error('Error generating tasks:', error);
     return [];
   }
 };
 
-// Analyze project health and provide insights
 export const analyzeProjectHealth = async (
   projectName: string,
   totalTasks: number,
@@ -103,13 +95,11 @@ export const analyzeProjectHealth = async (
 
     let content = completion.choices[0]?.message?.content || '{"summary":"Unable to analyze","recommendations":[],"riskLevel":"medium"}';
     
-    // Remove markdown code blocks if present
     content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     
     const insight = JSON.parse(content);
     return insight;
   } catch (error) {
-    console.error('Error analyzing project:', error);
     return {
       summary: "Analysis unavailable",
       recommendations: [],
@@ -118,7 +108,6 @@ export const analyzeProjectHealth = async (
   }
 };
 
-// Smart workload balancing
 export const recommendTaskAssignment = async (
   taskName: string,
   teamMembers: Array<{ name: string; taskCount: number; capacity: number; skills?: string[] }>
@@ -150,12 +139,10 @@ export const recommendTaskAssignment = async (
 
     return completion.choices[0]?.message?.content?.trim() || teamMembers[0]?.name || '';
   } catch (error) {
-    console.error('Error recommending assignment:', error);
     return teamMembers[0]?.name || '';
   }
 };
 
-// AI Chat Assistant
 export const chatWithAI = async (
   message: string,
   context?: string
@@ -183,18 +170,16 @@ export const chatWithAI = async (
 
     return completion.choices[0]?.message?.content || "I'm sorry, I couldn't process that request.";
   } catch (error) {
-    console.error('Error in AI chat:', error);
     return "I'm having trouble connecting right now. Please try again.";
   }
 };
 
-// Estimate task completion time
 export const estimateTaskDuration = async (
   taskName: string,
   projectContext?: string
 ): Promise<number> => {
   if (!openai) {
-    return 4; // Default estimate
+    return 4;
   }
   
   try {
@@ -217,7 +202,6 @@ export const estimateTaskDuration = async (
     const hours = parseFloat(completion.choices[0]?.message?.content || '4');
     return isNaN(hours) ? 4 : hours;
   } catch (error) {
-    console.error('Error estimating duration:', error);
     return 4;
   }
 };

@@ -12,18 +12,15 @@ const TeamOverview = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
-  const [selectedMember, setSelectedMember] = useState(null); // Track which member's tasks are being viewed in modal
+  const [selectedMember, setSelectedMember] = useState(null);
   
-  // Helper to get unique member ID
   const getMemberId = (member, index) => {
-    // Prioritize member.id (from backend) - must be a valid string
     if (member && member.id) {
       const id = String(member.id).trim();
       if (id && id !== 'undefined' && id !== 'null' && id !== '') {
         return id;
       }
     }
-    // Fallback: use name + email + index for guaranteed uniqueness
     const name = String(member?.name || 'unknown');
     const email = String(member?.email || `idx${index}`);
     const fallbackId = `member-${name}-${email}-${index}`;
@@ -40,12 +37,10 @@ const TeamOverview = () => {
   useEffect(() => {
     fetchTeamMembers();
     
-    // Poll for updates every 30 seconds
     const interval = setInterval(() => {
       fetchTeamMembers();
-    }, 30000); // 30 seconds
+    }, 30000);
     
-    // Cleanup interval on unmount
     return () => clearInterval(interval);
   }, []);
 
@@ -58,7 +53,6 @@ const TeamOverview = () => {
       setTeamMembers(response.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching team members:', error);
       toast.error('Failed to load team members. Please try again.');
       setLoading(false);
     } finally {
@@ -91,7 +85,6 @@ const TeamOverview = () => {
       fetchTeamMembers();
       closeModal();
     } catch (error) {
-      console.error('Error saving team member:', error);
       toast.error('Failed to save team member. Please try again.');
     }
   };
@@ -103,7 +96,6 @@ const TeamOverview = () => {
         toast.success('Team member removed successfully!');
         fetchTeamMembers();
       } catch (error) {
-        console.error('Error deleting team member:', error);
         toast.error('Failed to remove team member. Please try again.');
       }
     }
@@ -138,8 +130,6 @@ const TeamOverview = () => {
   };
 
   const openTasksModal = (member) => {
-    console.log('Opening tasks modal for member:', member);
-    console.log('Member assignedTasks:', member.assignedTasks);
     setSelectedMember(member);
   };
 
@@ -209,7 +199,6 @@ const TeamOverview = () => {
   }
   return (
     <div className="max-w-7xl mx-auto relative z-10">
-      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2">Team Management</h1>
@@ -237,10 +226,8 @@ const TeamOverview = () => {
         </div>
       </div>
 
-      {/* Team Members Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {teamMembers.map((member, index) => {
-          // Ensure we have a unique identifier - use helper function
           const memberId = getMemberId(member, index);
           
           return (
@@ -300,7 +287,6 @@ const TeamOverview = () => {
               )}
 
               <div className="pt-3 border-t border-slate-700/50 space-y-3">
-                {/* Workload Status */}
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-slate-400">Assigned Tasks</span>
@@ -312,7 +298,7 @@ const TeamOverview = () => {
                     <div
                       className={`h-2 rounded-full transition-all duration-500 ${getWorkloadBarColor(member)}`}
                       style={{ 
-                        width: `${Math.min((member.taskCount || 0) * 25, 100)}%` // Visual representation: 0-4 tasks = 0-100%
+                        width: `${Math.min((member.taskCount || 0) * 25, 100)}%`
                       }}
                     ></div>
                   </div>
@@ -324,7 +310,6 @@ const TeamOverview = () => {
                   </div>
                 </div>
 
-                {/* Assigned Tasks Button */}
                 {member.assignedTasks && member.assignedTasks.length > 0 && (
                   <div className="mt-3">
                     <button
@@ -358,7 +343,6 @@ const TeamOverview = () => {
         </div>
       )}
 
-      {/* Workload Legend */}
       <div className="mt-8 glass-card rounded-2xl p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Workload Legend</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -386,11 +370,9 @@ const TeamOverview = () => {
         </div>
       </div>
 
-      {/* Assigned Tasks Modal */}
       {selectedMember && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeTasksModal}>
           <div className="glass-strong rounded-2xl p-6 max-w-3xl w-full mx-4 border border-slate-700/50 max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-            {/* Modal Header */}
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-700/50">
               <div>
                 <h2 className="text-2xl font-bold text-white">
@@ -410,10 +392,8 @@ const TeamOverview = () => {
               </button>
             </div>
 
-            {/* Modal Content - Scrollable */}
             <div className="flex-1 overflow-y-auto pr-2 min-h-0">
               {selectedMember.assignedTasks && selectedMember.assignedTasks.length > 0 ? (
-                /* Group tasks by project */
                 (() => {
                   const tasksByProject = {};
                   selectedMember.assignedTasks.forEach(task => {
@@ -508,7 +488,6 @@ const TeamOverview = () => {
               )}
             </div>
 
-            {/* Modal Footer */}
             <div className="mt-6 pt-4 border-t border-slate-700/50 flex justify-end">
               <button
                 onClick={closeTasksModal}
@@ -521,7 +500,6 @@ const TeamOverview = () => {
         </div>
       )}
 
-      {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="glass-strong rounded-2xl p-8 max-w-md w-full mx-4 border border-slate-700/50 max-h-[90vh] overflow-y-auto">

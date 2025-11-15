@@ -22,14 +22,14 @@ const TaskList = () => {
   const [assignedTo, setAssignedTo] = useState('');
   const [selectedMember, setSelectedMember] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [taskPriority, setTaskPriority] = useState('medium'); // Priority for new task
+  const [taskPriority, setTaskPriority] = useState('medium');
   const [editingTaskDueDate, setEditingTaskDueDate] = useState(null);
   const [showDueDateModal, setShowDueDateModal] = useState(false);
   const [taskDueDate, setTaskDueDate] = useState('');
   const [editingTaskPriority, setEditingTaskPriority] = useState(null);
   const [showPriorityModal, setShowPriorityModal] = useState(false);
   const [taskPriorityValue, setTaskPriorityValue] = useState('medium');
-  const [autoAssigning, setAutoAssigning] = useState(null); // taskId being auto-assigned
+  const [autoAssigning, setAutoAssigning] = useState(null);
   const [updatingPriorities, setUpdatingPriorities] = useState(false);
 
   useEffect(() => {
@@ -43,7 +43,6 @@ const TaskList = () => {
       setProject(response.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching project:', error);
       toast.error('Failed to load project. Please try again.');
       setLoading(false);
     }
@@ -54,7 +53,6 @@ const TaskList = () => {
       const response = await getTeamMembers();
       setTeamMembers(response.data);
     } catch (error) {
-      console.error('Error fetching team members:', error);
     }
   };
 
@@ -62,9 +60,11 @@ const TaskList = () => {
     try {
       await updateTask(id, task.id, { completed: !task.completed });
       toast.success(task.completed ? 'Task marked as incomplete' : 'Task completed!');
-      fetchProject();
+      await fetchProject();
+      if (task.assignedTo) {
+        await fetchTeamMembers();
+      }
     } catch (error) {
-      console.error('Error updating task:', error);
       toast.error('Failed to update task. Please try again.');
     }
   };
@@ -86,7 +86,6 @@ const TaskList = () => {
       setShowModal(false);
       fetchProject();
     } catch (error) {
-      console.error('Error creating task:', error);
       toast.error('Failed to create task. Please try again.');
     }
   };
@@ -98,7 +97,6 @@ const TaskList = () => {
         toast.success('Task deleted successfully!');
         fetchProject();
       } catch (error) {
-        console.error('Error deleting task:', error);
         toast.error('Failed to delete task. Please try again.');
       }
     }
@@ -116,7 +114,6 @@ const TaskList = () => {
       toast.success('✨ AI generated tasks successfully!');
       fetchProject();
     } catch (error) {
-      console.error('Error generating tasks:', error);
       toast.error('Failed to generate tasks. Make sure your OpenAI API key is configured.');
     } finally {
       setGeneratingTasks(false);
@@ -131,7 +128,6 @@ const TaskList = () => {
       setShowInsights(true);
       toast.success('AI insights generated!');
     } catch (error) {
-      console.error('Error getting insights:', error);
       toast.error('Failed to get insights. Make sure your OpenAI API key is configured.');
     } finally {
       setLoadingInsights(false);
@@ -153,13 +149,12 @@ const TaskList = () => {
       await updateTask(id, taskToAssign.id, { assignedTo });
       toast.success(assignedTo ? `Task assigned to ${assignedTo}` : 'Task unassigned');
       await fetchProject();
-      await fetchTeamMembers(); // Refresh team members to sync workload
+      await fetchTeamMembers();
       
       setShowAssignModal(false);
       setTaskToAssign(null);
       setSelectedMember('');
     } catch (error) {
-      console.error('Error assigning task:', error);
       toast.error('Failed to assign task. Please try again.');
     }
   };
@@ -207,7 +202,6 @@ const TaskList = () => {
       setTaskPriorityValue('medium');
       fetchProject();
     } catch (error) {
-      console.error('Error updating priority:', error);
       toast.error('Failed to update priority. Please try again.');
     }
   };
@@ -224,7 +218,6 @@ const TaskList = () => {
       setTaskDueDate('');
       fetchProject();
     } catch (error) {
-      console.error('Error updating due date:', error);
       toast.error('Failed to update due date. Please try again.');
     }
   };
@@ -241,12 +234,11 @@ const TaskList = () => {
       if (response.data.success) {
         toast.success(`✨ Task auto-assigned to ${response.data.assignedTo}!`);
         await fetchProject();
-        await fetchTeamMembers(); // Refresh team data
+        await fetchTeamMembers();
       } else {
         toast.error(response.data.message || 'Failed to auto-assign task');
       }
     } catch (error) {
-      console.error('Error auto-assigning task:', error);
       toast.error('Failed to auto-assign task. Please try again.');
     } finally {
       setAutoAssigning(null);
@@ -264,7 +256,6 @@ const TaskList = () => {
         toast.error('Failed to update priorities');
       }
     } catch (error) {
-      console.error('Error updating priorities:', error);
       toast.error('Failed to update priorities. Please try again.');
     } finally {
       setUpdatingPriorities(false);
@@ -309,7 +300,6 @@ const TaskList = () => {
         Back to Projects
       </button>
 
-      {/* Project Header */}
       <div className="glass-card rounded-2xl p-8 mb-6">
         <div className="flex justify-between items-start mb-6">
           <div className="flex-1">
@@ -319,7 +309,6 @@ const TaskList = () => {
             )}
           </div>
           
-          {/* AI Buttons */}
           <div className="flex gap-3 flex-wrap">
             <button
               onClick={handleGenerateTasks}
@@ -378,7 +367,6 @@ const TaskList = () => {
           </div>
         </div>
 
-        {/* Progress Section */}
         <div className="flex items-center gap-6 mb-4">
           <span className={`px-4 py-2 rounded-full text-sm font-semibold border ${
             project.status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
@@ -406,7 +394,6 @@ const TaskList = () => {
         </div>
       </div>
 
-      {/* AI Insights Modal */}
       {showInsights && insights && (
         <div className="glass-card rounded-2xl p-6 mb-6 border-2 border-purple-500/30">
           <div className="flex justify-between items-start mb-4">
@@ -456,7 +443,6 @@ const TaskList = () => {
         </div>
       )}
 
-      {/* Tasks Section */}
       <div className="glass-card rounded-2xl p-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white">Tasks</h2>
@@ -617,7 +603,6 @@ const TaskList = () => {
         )}
       </div>
 
-      {/* Add Task Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="glass-strong rounded-2xl p-8 max-w-md w-full mx-4 border border-slate-700/50">
@@ -710,7 +695,6 @@ const TaskList = () => {
         </div>
       )}
 
-      {/* Assign Task Modal */}
       {showAssignModal && taskToAssign && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="glass-strong rounded-2xl p-8 max-w-md w-full mx-4 border border-slate-700/50">
@@ -734,8 +718,6 @@ const TaskList = () => {
                 >
                   <option value="">-- Unassign / Select Member --</option>
                   {teamMembers.map((member) => {
-                    // Use taskCount from team member data (includes all projects)
-                    // If this task is currently assigned to this member, subtract 1
                     const currentTaskCount = (member.taskCount || 0) - (taskToAssign.assignedTo === member.name ? 1 : 0);
                     const workloadText = currentTaskCount > 0 ? ` (${currentTaskCount} task${currentTaskCount !== 1 ? 's' : ''})` : '';
                     return (
@@ -750,10 +732,7 @@ const TaskList = () => {
                     {(() => {
                       const member = teamMembers.find(m => m.name === selectedMember);
                       if (!member) return null;
-                      // Use taskCount from team member data (includes all projects)
-                      // If this task is currently assigned to this member, subtract 1
                       const currentTaskCount = (member.taskCount || 0) - (taskToAssign.assignedTo === member.name ? 1 : 0);
-                      // If reassigning to the same person, count stays the same; otherwise add 1
                       const newTaskCount = taskToAssign.assignedTo === selectedMember ? currentTaskCount : currentTaskCount + 1;
                       const workloadLevel = newTaskCount >= 3 ? 'high' : newTaskCount === 2 ? 'medium' : 'no';
                       return (
@@ -807,7 +786,6 @@ const TaskList = () => {
         </div>
       )}
 
-      {/* Priority Modal */}
       {showPriorityModal && editingTaskPriority && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="glass-strong rounded-2xl p-8 max-w-md w-full mx-4 border border-slate-700/50">
@@ -881,7 +859,6 @@ const TaskList = () => {
         </div>
       )}
 
-      {/* Due Date Modal */}
       {showDueDateModal && editingTaskDueDate && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="glass-strong rounded-2xl p-8 max-w-md w-full mx-4 border border-slate-700/50">

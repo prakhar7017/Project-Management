@@ -4,28 +4,13 @@ import Project from '../models/Project';
 
 const router = Router();
 
-// Get all team members with current workload
 router.get('/', async (req: Request, res: Response) => {
   try {
     const teamMembers = await TeamMember.find();
     const projects = await Project.find();
     
-    // Debug: Log all team members
-    console.log('\n🔍 Team Members in DB:');
-    teamMembers.forEach(m => console.log(`   - "${m.name}"`));
-    
-    // Debug: Log all assigned tasks
-    console.log('\n📋 All Tasks with Assignments:');
-    projects.forEach(project => {
-      project.tasks.forEach(task => {
-        if (task.assignedTo) {
-          console.log(`   - "${task.name}" → "${task.assignedTo}" (completed: ${task.completed})`);
-        }
-      });
-    });
-    
     const membersWithWorkload = teamMembers.map(member => {
-      let taskCount = 0; // Total assigned tasks (including completed)
+      let taskCount = 0;
       let completedCount = 0;
       const assignedTasks: Array<{
         taskId: string;
@@ -41,10 +26,9 @@ router.get('/', async (req: Request, res: Response) => {
         const matchingTasks = project.tasks.filter(
           task => task.assignedTo === member.name
         );
-        taskCount += matchingTasks.length; // Total tasks assigned
+        taskCount += matchingTasks.filter(t => !t.completed).length;
         completedCount += matchingTasks.filter(t => t.completed).length;
         
-        // Add task details
         matchingTasks.forEach(task => {
           assignedTasks.push({
             taskId: task.id,
@@ -56,26 +40,18 @@ router.get('/', async (req: Request, res: Response) => {
             dueDate: task.dueDate
           });
         });
-        
-        // Debug logging
-        if (matchingTasks.length > 0) {
-          console.log(`✅ Found ${matchingTasks.length} task(s) for "${member.name}" (${taskCount} total, ${completedCount} completed)`);
-          matchingTasks.forEach(task => {
-            console.log(`   - Task: "${task.name}", AssignedTo: "${task.assignedTo}", Completed: ${task.completed}`);
-          });
-        }
       });
       
       return {
-        id: member._id.toString(), // Ensure ID is a string
+        id: member._id.toString(),
         name: member.name,
         email: member.email,
         role: member.role,
-        taskCount, // Total assigned tasks
+        taskCount,
         completedCount,
         capacity: member.capacity,
         skills: member.skills,
-        assignedTasks // Array of assigned tasks with project info
+        assignedTasks
       };
     });
     
@@ -85,7 +61,6 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// Get single team member
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const member = await TeamMember.findById(req.params.id);
@@ -98,7 +73,6 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Create team member
 router.post('/', async (req: Request, res: Response) => {
   try {
     const { name, email, role, capacity, skills } = req.body;
@@ -122,7 +96,6 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// Update team member
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { name, email, role, capacity, skills } = req.body;
@@ -145,7 +118,6 @@ router.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Delete team member
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const member = await TeamMember.findByIdAndDelete(req.params.id);
