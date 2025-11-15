@@ -566,7 +566,7 @@ const TaskList = () => {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  {!task.assignedTo && !task.completed && (
+                  {!task.completed && (
                     <button
                       onClick={() => handleAutoAssign(task)}
                       disabled={autoAssigning === task.id}
