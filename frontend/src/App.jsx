@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ToastProvider, useToastContext } from './contexts/ToastContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Navigation from './components/Navigation';
 import ProjectDashboard from './components/ProjectDashboardNew';
 import TaskList from './components/TaskListNew';
@@ -33,9 +34,11 @@ const AppContent = () => {
 function App() {
   return (
     <Router>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
+      <ThemeProvider>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
+      </ThemeProvider>
     </Router>
   );
 }

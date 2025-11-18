@@ -201,17 +201,17 @@ const TeamOverview = () => {
     <div className="max-w-7xl mx-auto relative z-10">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Team Management</h1>
-          <p className="text-slate-400">
+          <h1 className="text-4xl font-bold text-white dark:text-white light:text-slate-900 mb-2">Team Management</h1>
+          <p className="text-slate-400 dark:text-slate-400 light:text-slate-600">
             Manage your team members
-            <span className="ml-3 text-xs text-slate-500">• Auto-refreshes every 30s</span>
+            <span className="ml-3 text-xs text-slate-500 dark:text-slate-500 light:text-slate-500">• Auto-refreshes every 30s</span>
           </p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={handleManualRefresh}
             disabled={refreshing}
-            className="flex items-center gap-2 bg-slate-700/50 text-slate-300 px-4 py-3 rounded-xl hover:bg-slate-700 hover:text-white transition-smooth font-medium border border-slate-600 disabled:opacity-50"
+              className="flex items-center gap-2 bg-slate-700/50 dark:bg-slate-700/50 light:bg-slate-200 text-slate-300 dark:text-slate-300 light:text-slate-700 px-4 py-3 rounded-xl hover:bg-slate-700 dark:hover:bg-slate-700 light:hover:bg-slate-300 hover:text-white dark:hover:text-white light:hover:text-slate-900 transition-smooth font-medium border border-slate-600 dark:border-slate-600 light:border-slate-300 disabled:opacity-50"
           >
             <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
             {refreshing ? 'Refreshing...' : 'Refresh'}
@@ -241,11 +241,11 @@ const TeamOverview = () => {
                     {member.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">
+                    <h3 className="text-lg font-semibold text-white dark:text-white light:text-slate-900">
                       {member.name}
                     </h3>
                     {member.role && (
-                      <p className="text-sm text-slate-400">{member.role}</p>
+                      <p className="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">{member.role}</p>
                     )}
                   </div>
                 </div>
@@ -289,12 +289,12 @@ const TeamOverview = () => {
               <div className="pt-3 border-t border-slate-700/50 space-y-3">
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-slate-400">Assigned Tasks</span>
+                    <span className="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Assigned Tasks</span>
                     <span className={`text-xs font-semibold px-2 py-1 rounded-full border ${getWorkloadColor(member)}`}>
                       {getWorkloadStatus(member)}
                     </span>
                   </div>
-                  <div className="w-full bg-slate-700/50 rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-slate-700/50 dark:bg-slate-700/50 light:bg-slate-200 rounded-full h-2 overflow-hidden">
                     <div
                       className={`h-2 rounded-full transition-all duration-500 ${getWorkloadBarColor(member)}`}
                       style={{ 
@@ -302,8 +302,8 @@ const TeamOverview = () => {
                       }}
                     ></div>
                   </div>
-                  <div className="flex justify-between text-xs text-slate-400 mt-1">
-                    <span className="font-medium text-white">{member.taskCount || 0} task{(member.taskCount || 0) !== 1 ? 's' : ''} assigned</span>
+                  <div className="flex justify-between text-xs text-slate-400 dark:text-slate-400 light:text-slate-600 mt-1">
+                    <span className="font-medium text-white dark:text-white light:text-slate-900">{member.taskCount || 0} task{(member.taskCount || 0) !== 1 ? 's' : ''} assigned</span>
                     {member.completedCount > 0 && (
                       <span className="text-emerald-400">{member.completedCount} completed</span>
                     )}
@@ -331,8 +331,8 @@ const TeamOverview = () => {
       {teamMembers.length === 0 && (
         <div className="glass-card rounded-2xl p-12 text-center">
           <Users className="mx-auto text-slate-600 mb-4" size={64} />
-          <h3 className="text-2xl font-bold text-white mb-2">No team members yet</h3>
-          <p className="text-slate-400 mb-6">Add your first team member to start managing workload!</p>
+          <h3 className="text-2xl font-bold text-white dark:text-white light:text-slate-900 mb-2">No team members yet</h3>
+          <p className="text-slate-400 dark:text-slate-400 light:text-slate-600 mb-6">Add your first team member to start managing workload!</p>
           <button
             onClick={() => openModal()}
             className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl hover:scale-105 transition-smooth neon-blue font-medium"
@@ -344,27 +344,27 @@ const TeamOverview = () => {
       )}
 
       <div className="mt-8 glass-card rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Workload Legend</h3>
+        <h3 className="text-lg font-semibold text-white dark:text-white light:text-slate-900 mb-4">Workload Legend</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex items-center gap-3">
             <div className="w-4 h-4 bg-emerald-500 rounded"></div>
             <div>
-              <p className="text-white font-medium">Available</p>
-              <p className="text-sm text-slate-400">Less than 70% capacity</p>
+              <p className="text-white dark:text-white light:text-slate-900 font-medium">Available</p>
+              <p className="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">Less than 70% capacity</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="w-4 h-4 bg-orange-500 rounded"></div>
             <div>
-              <p className="text-white font-medium">High Load</p>
-              <p className="text-sm text-slate-400">70-99% capacity</p>
+              <p className="text-white dark:text-white light:text-slate-900 font-medium">High Load</p>
+              <p className="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">70-99% capacity</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="w-4 h-4 bg-red-500 rounded"></div>
             <div>
-              <p className="text-white font-medium">Overloaded</p>
-              <p className="text-sm text-slate-400">100% or more capacity</p>
+              <p className="text-white dark:text-white light:text-slate-900 font-medium">Overloaded</p>
+              <p className="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">100% or more capacity</p>
             </div>
           </div>
         </div>
@@ -375,10 +375,10 @@ const TeamOverview = () => {
           <div className="glass-strong rounded-2xl p-6 max-w-3xl w-full mx-4 border border-slate-700/50 max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-700/50">
               <div>
-                <h2 className="text-2xl font-bold text-white">
+                <h2 className="text-2xl font-bold text-white dark:text-white light:text-slate-900">
                   Assigned Tasks - {selectedMember.name}
                 </h2>
-                <p className="text-sm text-slate-400 mt-1">
+                <p className="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600 mt-1">
                   {selectedMember.assignedTasks && selectedMember.assignedTasks.length > 0 
                     ? `${selectedMember.assignedTasks.length} task${selectedMember.assignedTasks.length !== 1 ? 's' : ''} assigned`
                     : 'No tasks assigned'}
@@ -420,7 +420,7 @@ const TeamOverview = () => {
                   }
                   
                   return projectEntries.map(([projectId, projectData]) => (
-                    <div key={projectId} className="mb-6 bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                    <div key={projectId} className="mb-6 bg-slate-800/50 dark:bg-slate-800/50 light:bg-slate-50 rounded-lg p-4 border border-slate-700/50 dark:border-slate-700/50 light:border-slate-300/50">
                       <div className="flex items-center gap-2 mb-3">
                         <FolderOpen size={18} className="text-blue-400" />
                         <span 
@@ -454,7 +454,7 @@ const TeamOverview = () => {
                                 className={`flex-1 ${
                                   task.completed 
                                     ? 'line-through text-slate-500' 
-                                    : 'text-white'
+                                    : 'text-white dark:text-white light:text-slate-900'
                                 }`}
                                 title={task.taskName}
                               >
@@ -503,12 +503,12 @@ const TeamOverview = () => {
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="glass-strong rounded-2xl p-8 max-w-md w-full mx-4 border border-slate-700/50 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold text-white mb-6">
+            <h2 className="text-2xl font-bold text-white dark:text-white light:text-slate-900 mb-6">
               {editingMember ? 'Edit Team Member' : 'Add Team Member'}
             </h2>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
-                <label className="block text-slate-300 font-medium mb-2">
+                <label className="block text-slate-300 dark:text-slate-300 light:text-slate-700 font-medium mb-2">
                   Name *
                 </label>
                 <input

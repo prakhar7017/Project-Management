@@ -34,13 +34,13 @@ const Toast = ({ toast, onClose }) => {
       <Icon size={20} className="flex-shrink-0 mt-0.5" />
       <div className="flex-1">
         {toast.title && (
-          <h4 className="font-semibold text-white mb-1">{toast.title}</h4>
+          <h4 className="font-semibold text-white dark:text-white light:text-slate-900 mb-1">{toast.title}</h4>
         )}
-        <p className="text-sm text-slate-300">{toast.message}</p>
+        <p className="text-sm text-slate-300 dark:text-slate-300 light:text-slate-700">{toast.message}</p>
       </div>
       <button
         onClick={() => onClose(toast.id)}
-        className="text-slate-400 hover:text-white transition-smooth flex-shrink-0"
+        className="text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-white dark:hover:text-white light:hover:text-slate-900 transition-smooth flex-shrink-0"
       >
         <X size={18} />
       </button>

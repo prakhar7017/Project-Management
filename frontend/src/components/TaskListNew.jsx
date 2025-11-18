@@ -275,7 +275,7 @@ const TaskList = () => {
   }
 
   if (!project) {
-    return <div className="text-center py-12 text-slate-400">Project not found</div>;
+    return <div className="text-center py-12 text-slate-400 dark:text-slate-400 light:text-slate-600">Project not found</div>;
   }
 
   const completedTasks = project.tasks?.filter(t => t.completed).length || 0;
@@ -294,7 +294,7 @@ const TaskList = () => {
     <div className="max-w-6xl mx-auto relative z-10">
       <button
         onClick={() => navigate('/')}
-        className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-smooth"
+        className="flex items-center gap-2 text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-white dark:hover:text-white light:hover:text-slate-900 mb-6 transition-smooth"
       >
         <ArrowLeft size={20} />
         Back to Projects
@@ -303,9 +303,9 @@ const TaskList = () => {
       <div className="glass-card rounded-2xl p-8 mb-6">
         <div className="flex justify-between items-start mb-6">
           <div className="flex-1">
-            <h1 className="text-4xl font-bold text-white mb-3">{project.name}</h1>
+            <h1 className="text-4xl font-bold text-white dark:text-white light:text-slate-900 mb-3">{project.name}</h1>
             {project.description && (
-              <p className="text-slate-400 text-lg">{project.description}</p>
+              <p className="text-slate-400 dark:text-slate-400 light:text-slate-600 text-lg">{project.description}</p>
             )}
           </div>
           
@@ -331,7 +331,7 @@ const TaskList = () => {
             <button
               onClick={handleGetInsights}
               disabled={loadingInsights}
-              className="flex items-center gap-2 bg-slate-700/50 text-slate-300 px-5 py-2.5 rounded-xl hover:bg-slate-700 hover:text-white transition-smooth font-medium border border-slate-600 disabled:opacity-50"
+              className="flex items-center gap-2 bg-slate-700/50 dark:bg-slate-700/50 light:bg-slate-200 text-slate-300 dark:text-slate-300 light:text-slate-700 px-5 py-2.5 rounded-xl hover:bg-slate-700 dark:hover:bg-slate-700 light:hover:bg-slate-300 hover:text-white dark:hover:text-white light:hover:text-slate-900 transition-smooth font-medium border border-slate-600 dark:border-slate-600 light:border-slate-300 disabled:opacity-50"
             >
               {loadingInsights ? (
                 <>
@@ -375,17 +375,17 @@ const TaskList = () => {
           }`}>
             {project.status}
           </span>
-          <span className="text-slate-400">
+          <span className="text-slate-400 dark:text-slate-400 light:text-slate-600">
             {completedTasks} of {totalTasks} tasks completed
           </span>
         </div>
 
         <div className="mb-2">
-          <div className="flex justify-between text-sm text-slate-400 mb-2">
+          <div className="flex justify-between text-sm text-slate-400 dark:text-slate-400 light:text-slate-600 mb-2">
             <span className="font-medium">Progress</span>
-            <span className="font-bold text-white">{project.progress}%</span>
+            <span className="font-bold text-white dark:text-white light:text-slate-900">{project.progress}%</span>
           </div>
-          <div className="w-full bg-slate-700/50 rounded-full h-3 overflow-hidden">
+          <div className="w-full bg-slate-700/50 dark:bg-slate-700/50 light:bg-slate-200 rounded-full h-3 overflow-hidden">
             <div
               className="h-3 rounded-full progress-bar"
               style={{ width: `${project.progress}%` }}
@@ -399,7 +399,7 @@ const TaskList = () => {
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-2">
               <Lightbulb className="text-purple-400" size={24} />
-              <h3 className="text-xl font-bold text-white">AI Insights</h3>
+              <h3 className="text-xl font-bold text-white dark:text-white light:text-slate-900">AI Insights</h3>
             </div>
             <button
               onClick={() => setShowInsights(false)}
@@ -411,8 +411,8 @@ const TaskList = () => {
           
           <div className="space-y-4">
             <div>
-              <h4 className="text-sm font-semibold text-slate-400 mb-2">Summary</h4>
-              <p className="text-white">{insights.summary}</p>
+              <h4 className="text-sm font-semibold text-slate-400 dark:text-slate-400 light:text-slate-600 mb-2">Summary</h4>
+              <p className="text-white dark:text-white light:text-slate-900">{insights.summary}</p>
             </div>
             
             {insights.recommendations?.length > 0 && (
@@ -445,7 +445,7 @@ const TaskList = () => {
 
       <div className="glass-card rounded-2xl p-8">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Tasks</h2>
+          <h2 className="text-2xl font-bold text-white dark:text-white light:text-slate-900">Tasks</h2>
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white px-5 py-2.5 rounded-xl hover:scale-105 transition-smooth neon-blue font-medium"

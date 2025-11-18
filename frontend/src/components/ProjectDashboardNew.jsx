@@ -160,8 +160,8 @@ const ProjectDashboard = () => {
       <div className="mb-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Projects</h1>
-            <p className="text-slate-400">Manage your projects with AI-powered insights</p>
+            <h1 className="text-4xl font-bold text-white dark:text-white light:text-slate-900 mb-2">Projects</h1>
+            <p className="text-slate-400 dark:text-slate-400 light:text-slate-600">Manage your projects with AI-powered insights</p>
           </div>
           <button
             onClick={() => openModal()}
@@ -180,7 +180,7 @@ const ProjectDashboard = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search projects..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
+              className="w-full pl-10 pr-4 py-2 bg-slate-800/50 dark:bg-slate-800/50 light:bg-white border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-xl text-white dark:text-white light:text-slate-900 placeholder-slate-500 dark:placeholder-slate-500 light:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
             />
             {searchQuery && (
               <button
@@ -197,7 +197,7 @@ const ProjectDashboard = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
+              className="px-4 py-2 bg-slate-800/50 dark:bg-slate-800/50 light:bg-white border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-xl text-white dark:text-white light:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
             >
               <option value="all">All Status</option>
               <option value="Not Started">Not Started</option>
@@ -215,7 +215,7 @@ const ProjectDashboard = () => {
                 setSortBy(by);
                 setSortOrder(order);
               }}
-              className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
+              className="px-4 py-2 bg-slate-800/50 dark:bg-slate-800/50 light:bg-white border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-xl text-white dark:text-white light:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
             >
               <option value="date-desc">Newest First</option>
               <option value="date-asc">Oldest First</option>
@@ -232,33 +232,33 @@ const ProjectDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="glass-card rounded-2xl p-6 hover-lift">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-400 text-sm font-medium">Total Projects</span>
+            <span className="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm font-medium">Total Projects</span>
             <FolderOpen className="text-blue-400" size={20} />
           </div>
-          <p className="text-3xl font-bold text-white">{projects.length}</p>
+          <p className="text-3xl font-bold text-white dark:text-white light:text-slate-900">{projects.length}</p>
         </div>
         <div className="glass-card rounded-2xl p-6 hover-lift">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-400 text-sm font-medium">In Progress</span>
+            <span className="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm font-medium">In Progress</span>
             <TrendingUp className="text-purple-400" size={20} />
           </div>
-          <p className="text-3xl font-bold text-white">
+          <p className="text-3xl font-bold text-white dark:text-white light:text-slate-900">
             {projects.filter(p => p.status === 'In Progress').length}
           </p>
         </div>
         <div className="glass-card rounded-2xl p-6 hover-lift">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-400 text-sm font-medium">Completed</span>
+            <span className="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm font-medium">Completed</span>
             <Sparkles className="text-emerald-400" size={20} />
           </div>
-          <p className="text-3xl font-bold text-white">
+          <p className="text-3xl font-bold text-white dark:text-white light:text-slate-900">
             {projects.filter(p => p.status === 'Completed').length}
           </p>
         </div>
       </div>
 
       {filteredAndSortedProjects.length !== projects.length && (
-        <div className="mb-4 text-sm text-slate-400">
+        <div className="mb-4 text-sm text-slate-400 dark:text-slate-400 light:text-slate-600">
           Showing {filteredAndSortedProjects.length} of {projects.length} projects
         </div>
       )}
@@ -278,7 +278,7 @@ const ProjectDashboard = () => {
                   <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg">
                     <FolderOpen className="text-white" size={20} />
                   </div>
-                  <h3 className="text-xl font-semibold text-white group-hover:gradient-text transition-all">
+                  <h3 className="text-xl font-semibold text-white dark:text-white light:text-slate-900 group-hover:gradient-text transition-all">
                     {project.name}
                   </h3>
                 </div>
@@ -299,7 +299,7 @@ const ProjectDashboard = () => {
               </div>
 
               {project.description && (
-                <p className="text-slate-400 text-sm mb-4 line-clamp-2">{project.description}</p>
+                <p className="text-slate-400 dark:text-slate-400 light:text-slate-600 text-sm mb-4 line-clamp-2">{project.description}</p>
               )}
 
               <div className="mb-4">
@@ -309,11 +309,11 @@ const ProjectDashboard = () => {
               </div>
 
               <div className="mb-3">
-                <div className="flex justify-between text-sm text-slate-400 mb-2">
+                <div className="flex justify-between text-sm text-slate-400 dark:text-slate-400 light:text-slate-600 mb-2">
                   <span className="font-medium">Progress</span>
-                  <span className="font-bold text-white">{project.progress}%</span>
+                  <span className="font-bold text-white dark:text-white light:text-slate-900">{project.progress}%</span>
                 </div>
-                <div className="w-full bg-slate-700/50 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-slate-700/50 dark:bg-slate-700/50 light:bg-slate-200 rounded-full h-2 overflow-hidden">
                   <div
                     className={`h-2 rounded-full bg-gradient-to-r ${getProgressColor(project.progress)} transition-all duration-500`}
                     style={{ width: `${project.progress}%` }}
@@ -321,8 +321,8 @@ const ProjectDashboard = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-sm pt-3 border-t border-slate-700/50">
-                <span className="text-slate-400">
+              <div className="flex items-center justify-between text-sm pt-3 border-t border-slate-700/50 dark:border-slate-700/50 light:border-slate-300/50">
+                <span className="text-slate-400 dark:text-slate-400 light:text-slate-600">
                   {project.tasks?.length || 0} task{project.tasks?.length !== 1 ? 's' : ''}
                 </span>
                 <span className="text-blue-400 font-medium group-hover:text-pink-400 transition-colors">
@@ -337,8 +337,8 @@ const ProjectDashboard = () => {
       {projects.length === 0 && (
         <div className="glass-card rounded-2xl p-12 text-center">
           <FolderOpen className="mx-auto text-slate-600 mb-4" size={64} />
-          <h3 className="text-2xl font-bold text-white mb-2">No projects yet</h3>
-          <p className="text-slate-400 mb-6">Create your first project to get started!</p>
+          <h3 className="text-2xl font-bold text-white dark:text-white light:text-slate-900 mb-2">No projects yet</h3>
+          <p className="text-slate-400 dark:text-slate-400 light:text-slate-600 mb-6">Create your first project to get started!</p>
           <button
             onClick={() => openModal()}
             className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl hover:scale-105 transition-smooth neon-blue font-medium"
@@ -352,14 +352,14 @@ const ProjectDashboard = () => {
       {projects.length > 0 && filteredAndSortedProjects.length === 0 && (
         <div className="glass-card rounded-2xl p-12 text-center">
           <Search className="mx-auto text-slate-600 mb-4" size={64} />
-          <h3 className="text-2xl font-bold text-white mb-2">No projects found</h3>
-          <p className="text-slate-400 mb-6">Try adjusting your search or filters</p>
+          <h3 className="text-2xl font-bold text-white dark:text-white light:text-slate-900 mb-2">No projects found</h3>
+          <p className="text-slate-400 dark:text-slate-400 light:text-slate-600 mb-6">Try adjusting your search or filters</p>
           <button
             onClick={() => {
               setSearchQuery('');
               setStatusFilter('all');
             }}
-            className="inline-flex items-center gap-2 bg-slate-700/50 text-slate-300 px-6 py-3 rounded-xl hover:bg-slate-700 transition-smooth font-medium"
+            className="inline-flex items-center gap-2 bg-slate-700/50 dark:bg-slate-700/50 light:bg-slate-200 text-slate-300 dark:text-slate-300 light:text-slate-700 px-6 py-3 rounded-xl hover:bg-slate-700 dark:hover:bg-slate-700 light:hover:bg-slate-300 transition-smooth font-medium"
           >
             <X size={20} />
             Clear Filters
@@ -369,39 +369,39 @@ const ProjectDashboard = () => {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-strong rounded-2xl p-8 max-w-md w-full mx-4 border border-slate-700/50">
-            <h2 className="text-2xl font-bold text-white mb-6">
+          <div className="glass-strong rounded-2xl p-8 max-w-md w-full mx-4 border border-slate-700/50 dark:border-slate-700/50 light:border-slate-300/50">
+            <h2 className="text-2xl font-bold text-white dark:text-white light:text-slate-900 mb-6">
               {editingProject ? 'Edit Project' : 'New Project'}
             </h2>
             <form onSubmit={handleSubmit}>
               <div className="mb-5">
-                <label className="block text-slate-300 font-medium mb-2">
+                <label className="block text-slate-300 dark:text-slate-300 light:text-slate-700 font-medium mb-2">
                   Project Name
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
+                  className="w-full px-4 py-3 bg-slate-800/50 dark:bg-slate-800/50 light:bg-white border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-xl text-white dark:text-white light:text-slate-900 placeholder-slate-500 dark:placeholder-slate-500 light:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
                   placeholder="Enter project name"
                   required
                 />
               </div>
               <div className="mb-5">
-                <label className="block text-slate-300 font-medium mb-2">
+                <label className="block text-slate-300 dark:text-slate-300 light:text-slate-700 font-medium mb-2">
                   Description (Optional)
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth resize-none"
+                  className="w-full px-4 py-3 bg-slate-800/50 dark:bg-slate-800/50 light:bg-white border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-xl text-white dark:text-white light:text-slate-900 placeholder-slate-500 dark:placeholder-slate-500 light:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth resize-none"
                   placeholder="Describe your project..."
                   rows="3"
                 />
               </div>
               {editingProject && (
                 <div className="mb-6">
-                  <label className="block text-slate-300 font-medium mb-2">
+                  <label className="block text-slate-300 dark:text-slate-300 light:text-slate-700 font-medium mb-2">
                     Progress (%)
                   </label>
                   <input
@@ -410,7 +410,7 @@ const ProjectDashboard = () => {
                     max="100"
                     value={formData.progress}
                     onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) || 0 })}
-                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
+                    className="w-full px-4 py-3 bg-slate-800/50 dark:bg-slate-800/50 light:bg-white border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-xl text-white dark:text-white light:text-slate-900 placeholder-slate-500 dark:placeholder-slate-500 light:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-smooth"
                   />
                 </div>
               )}
@@ -418,7 +418,7 @@ const ProjectDashboard = () => {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-6 py-3 text-slate-300 bg-slate-700/50 rounded-xl hover:bg-slate-700 transition-smooth font-medium"
+                  className="px-6 py-3 text-slate-300 dark:text-slate-300 light:text-slate-700 bg-slate-700/50 dark:bg-slate-700/50 light:bg-slate-200 rounded-xl hover:bg-slate-700 dark:hover:bg-slate-700 light:hover:bg-slate-300 transition-smooth font-medium"
                 >
                   Cancel
                 </button>
